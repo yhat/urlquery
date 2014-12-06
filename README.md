@@ -12,7 +12,7 @@ import (
 
 type EndpointOpts struct {
     Verbose  bool   `url:"v"`
-    Username string `url"username"`
+    Username string `url:"username"`
 }
 
 func main() {
