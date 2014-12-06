@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 var StructTag = "url"
@@ -17,6 +19,9 @@ func Marshal(ops interface{}) url.Values {
 	value := reflect.ValueOf(ops)
 	if value.Kind() == reflect.Ptr {
 		value = value.Elem()
+		if value.Kind() == reflect.Interface {
+			value = value.Elem()
+		}
 	}
 	if value.Kind() != reflect.Struct {
 		return url.Values{}
@@ -29,7 +34,12 @@ func Marshal(ops interface{}) url.Values {
 		}
 		key := field.Tag.Get(StructTag)
 		if key == "" {
-			key = strings.ToLower(field.Name)
+			// if the first letter of the field is lowercase, ignore
+			r, _ := utf8.DecodeRuneInString(field.Name)
+			if len(field.Name) == 0 || unicode.IsLower(r) {
+				continue
+			}
+			key = field.Name
 		}
 		v := value.Field(i)
 		switch v.Kind() {
@@ -40,13 +50,9 @@ func Marshal(ops interface{}) url.Values {
 				items.Add(key, "false")
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			if v.Int() > 0 {
-				items.Add(key, strconv.FormatInt(v.Int(), 10))
-			}
+			items.Add(key, strconv.FormatInt(v.Int(), 10))
 		case reflect.Float32, reflect.Float64:
-			if v.Float() > 0 {
-				items.Add(key, strconv.FormatFloat(v.Float(), 'f', -1, 64))
-			}
+			items.Add(key, strconv.FormatFloat(v.Float(), 'f', -1, 64))
 		case reflect.String:
 			if v.String() != "" {
 				items.Add(key, v.String())
