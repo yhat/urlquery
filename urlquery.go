@@ -33,6 +33,9 @@ func Marshal(ops interface{}) url.Values {
 			continue
 		}
 		key := field.Tag.Get(StructTag)
+		if key == "-" {
+			continue
+		}
 		if key == "" {
 			// if the first letter of the field is lowercase, ignore
 			r, _ := utf8.DecodeRuneInString(field.Name)
@@ -77,6 +80,9 @@ func Unmarshal(vals url.Values, ops interface{}) error {
 			continue
 		}
 		key := field.Tag.Get(StructTag)
+		if key == "-" {
+			continue
+		}
 		if key == "" {
 			key = field.Name
 		}
